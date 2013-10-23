@@ -1,4 +1,5 @@
 import binascii
+import importlib
 
 from django.contrib.auth import authenticate
 from django.conf import settings
@@ -11,7 +12,7 @@ class InvalidAuthenticationType(Exception):
 
 
 # TODO: OAuth
-VALID_AUTH_TYPES = ('AuthBasic', 'AuthBasicIsStaff', 'AuthNone')
+VALID_AUTH_TYPES = ('AuthBasic', 'AuthBasicIsStaff', 'AuthNone', 'rest_framework.authentication.TokenAuthentication')
 
 
 def api_authentication_required(func):
@@ -43,6 +44,18 @@ def api_authentication_required(func):
                 return JSONResponse({'error': 'authentication error'}, status=401)
             return JSONResponse({'error': 'Authorization header not set'}, status=401)
 
-        # AuthNone: No authorization.
+        elif AUTH_TYPE == 'rest_framework.authentication.TokenAuthentication':
+            TokenAuthentication = importlib.import_module('rest_framework.authentication.TokenAuthentication')
+            AuthenticationFailed = importlib.import_module('rest_framework.exceptions.AuthenticationFailed')
+
+            token = TokenAuthentication()
+            try:
+                auth = token.authenticate(request=request)
+                if auth is None:
+                    return JSONResponse({'error': 'Authorization header not set'}, status=401)
+            except AuthenticationFailed as e:
+                return JSONResponse({'error': e.detail}, status=401)
+
+# AuthNone: No authorization.
         return func(request, *args, **kwargs)
     return wrapper
