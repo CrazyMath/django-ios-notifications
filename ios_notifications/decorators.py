@@ -1,5 +1,4 @@
 import binascii
-import importlib
 
 from django.contrib.auth import authenticate
 from django.conf import settings
@@ -45,8 +44,8 @@ def api_authentication_required(func):
             return JSONResponse({'error': 'Authorization header not set'}, status=401)
 
         elif AUTH_TYPE == 'rest_framework.authentication.TokenAuthentication':
-            TokenAuthentication = importlib.import_module('rest_framework.authentication.TokenAuthentication')
-            AuthenticationFailed = importlib.import_module('rest_framework.exceptions.AuthenticationFailed')
+            from rest_framework.authentication import TokenAuthentication
+            from rest_framework.exceptions import AuthenticationFailed
 
             token = TokenAuthentication()
             try:
